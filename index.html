@@ -5,29 +5,55 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Warna</title>
-    <link rel="stylesheet" href="asset/css/style.min.css" />
+    <title>Warna - Premium Pantone Explorer</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="asset/css/style.css" />
 </head>
 
 <body>
     <div id="container1">
         <nav class="sembunyi">
+            <div class="nav-brand">
+                <i data-lucide="palette" class="brand-icon"></i>
+                <span>Warna.co</span>
+            </div>
             <ul>
-                <li>Warna Tahun</li>
-                <li>2021</li>
-                <li>2020</li>
-                <li>2019</li>
-                <li>2018</li>
-                <li>2017</li>
-                <li>2016</li>
+                <li><i data-lucide="calendar"></i> Warna Tahun</li>
+                <li><i data-lucide="sparkles"></i> 2021</li>
+                <li><i data-lucide="award"></i> 2020</li>
+                <li><i data-lucide="flame"></i> 2019</li>
+                <li><i data-lucide="zap"></i> 2018</li>
+                <li><i data-lucide="leaf"></i> 2017</li>
+                <li><i data-lucide="droplet"></i> 2016</li>
             </ul>
         </nav>
 
-        <div id="tombol"></div>
+        <div id="tombol"><i data-lucide="menu" id="tombolIcon"></i></div>
 
+        <div class="ambient-glow glow-1"></div>
+        <div class="ambient-glow glow-2"></div>
         <div id="container2">
-            <header class="container">
-                <h1>Warna</h1>
+            <header class="app-header">
+                <div class="header-logo">
+                    <i data-lucide="palette" class="logo-icon"></i>
+                    <h1>Color Explorer</h1>
+                </div>
+                <!-- Search & Filters -->
+                <div class="search-wrapper">
+                    <div class="search-box">
+                        <i data-lucide="search" class="search-icon"></i>
+                        <input type="text" id="colorSearch" placeholder="Cari warna, kode HEX, atau tahun..." />
+                        <button id="clearSearch" class="clear-btn hidden"><i data-lucide="x"></i></button>
+                    </div>
+                    <div class="results-stats">
+                        <span id="colorCount">Menampilkan -- warna</span>
+                    </div>
+                </div>
             </header>
 
             <main>
@@ -947,12 +973,64 @@
             </main>
 
             <footer class="container">
-                <p>&copy All Right | FDA | 2022</p>
+                <p>&copy All Right | FDA | 2022 - 2026. Made with &hearts; for colors.</p>
             </footer>
         </div>
     </div>
 
-    <script src="asset/js/script.min.js"></script>
+    <!-- Modal Detail Warna & Harmoni -->
+    <div id="colorModal" class="modal-backdrop hidden">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <div class="header-title-wrapper">
+                    <span class="modal-subtitle" id="modalColorYear">2020</span>
+                    <h3 id="modalColorName">Nama Warna</h3>
+                </div>
+                <button id="closeModal" class="close-modal-btn"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <!-- Preview Warna Besar -->
+                <div id="modalColorPreview" class="large-swatch">
+                    <div class="swatch-details">
+                        <span id="modalHex" class="swatch-text-hex">#000000</span>
+                        <span id="modalRgb" class="swatch-text-rgb">rgb(0, 0, 0)</span>
+                    </div>
+                    <button id="modalCopyBtn" class="modal-copy-btn"><i data-lucide="copy"></i> Salin HEX</button>
+                </div>
+                
+                <!-- Harmoni Warna -->
+                <div class="harmonies-section">
+                    <h4>Harmoni & Palet Warna</h4>
+                    <p class="harmony-intro">Klik pada warna di bawah ini untuk menyalin kodenya secara instan.</p>
+                    
+                    <div class="harmony-group">
+                        <span class="group-title"><i data-lucide="arrow-right-left"></i> Komplementer (Complementary)</span>
+                        <div class="harmony-grid" id="harmonyComplementary"></div>
+                    </div>
+                    
+                    <div class="harmony-group">
+                        <span class="group-title"><i data-lucide="split"></i> Analogi (Analogous)</span>
+                        <div class="harmony-grid" id="harmonyAnalogous"></div>
+                    </div>
+                    
+                    <div class="harmony-group">
+                        <span class="group-title"><i data-lucide="triangle"></i> Triadik (Triadic)</span>
+                        <div class="harmony-grid" id="harmonyTriadic"></div>
+                    </div>
+                    
+                    <div class="harmony-group">
+                        <span class="group-title"><i data-lucide="layers"></i> Monokromatik (Monochromatic)</span>
+                        <div class="harmony-grid" id="harmonyMonochromatic"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container Toast Notifikasi -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="asset/js/script.js"></script>
 </body>
 
 </html>

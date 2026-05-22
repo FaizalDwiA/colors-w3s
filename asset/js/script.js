@@ -1,29 +1,488 @@
-const container = document.querySelectorAll("main .container2");
-const warna = document.querySelectorAll("main .warna");
-const nav = document.querySelectorAll("nav ul>*");
-const main = document.querySelectorAll("main>*");
-const navUtama = document.querySelector("nav");
-const tombol = document.getElementById("tombol");
+/* 
+   ==========================================================================
+   Engine Interaktif Warna.co - Premium Design Explorer
+   Created by: FDA | Enhanced by Antigravity (Gemini 3.5 Flash)
+   ==========================================================================
+*/
 
-for (let a = 0; a < container.length; a++) {
-    container[a].style.backgroundColor = warna[a].textContent;
-}
+document.addEventListener("DOMContentLoaded", () => {
+    // --- Selectors ---
+    const rawCards = document.querySelectorAll("main .container2");
+    const navItems = document.querySelectorAll("nav ul > li");
+    const panels = document.querySelectorAll("main > *");
+    const navBar = document.querySelector("nav");
+    const menuBtn = document.getElementById("tombol");
+    const menuIcon = document.getElementById("tombolIcon");
+    const searchInput = document.getElementById("colorSearch");
+    const clearSearchBtn = document.getElementById("clearSearch");
+    const colorCountEl = document.getElementById("colorCount");
 
-for (let a = 0; a < nav.length; a++) {
-    main[a].classList.add("hidden");
-    main[0].classList.remove("hidden");
-    nav[0].classList.add("dipilih");
-    nav[a].addEventListener("click", function () {
-        for (let b = 0; b < main.length; b++) {
-            main[b].classList.add("hidden");
-            nav[b].classList.remove("dipilih");
+    // Modal elements
+    const colorModal = document.getElementById("colorModal");
+    const modalCloseBtn = document.getElementById("closeModal");
+    const modalColorYear = document.getElementById("modalColorYear");
+    const modalColorName = document.getElementById("modalColorName");
+    const modalColorPreview = document.getElementById("modalColorPreview");
+    const modalHexText = document.getElementById("modalHex");
+    const modalRgbText = document.getElementById("modalRgb");
+    const modalCopyBtn = document.getElementById("modalCopyBtn");
+
+    const harmonyComplementary = document.getElementById("harmonyComplementary");
+    const harmonyAnalogous = document.getElementById("harmonyAnalogous");
+    const harmonyTriadic = document.getElementById("harmonyTriadic");
+    const harmonyMonochromatic = document.getElementById("harmonyMonochromatic");
+
+    // --- Color Utility Algorithms ---
+
+    // Convert HEX to RGB
+    function hexToRgb(hex) {
+        hex = hex.replace("#", "");
+        if (hex.length === 3) {
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
         }
-        // navUtama.classList.remove('tampil');
-        main[a].classList.remove("hidden");
-        nav[a].classList.add("dipilih");
-    });
-}
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        return `rgb(${r}, ${g}, ${b})`;
+    }
 
-tombol.addEventListener("click", function () {
-    navUtama.classList.toggle("sembunyi");
+    // YIQ Contrast Ratio Algorithm (returns white or black text depending on background brightness)
+    function getContrastColor(hex) {
+        hex = hex.replace("#", "");
+        if (hex.length === 3) {
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        }
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+        return (yiq >= 135) ? '#09090b' : '#ffffff';
+    }
+
+    // Convert HEX to HSL
+    function hexToHsl(hex) {
+        hex = hex.replace("#", "");
+        if (hex.length === 3) {
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        }
+        let r = parseInt(hex.substring(0, 2), 16) / 255;
+        let g = parseInt(hex.substring(2, 4), 16) / 255;
+        let b = parseInt(hex.substring(4, 6), 16) / 255;
+        
+        let max = Math.max(r, g, b), min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+        
+        if (max === min) {
+            h = s = 0; // achromatic
+        } else {
+            let d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+            }
+            h /= 6;
+        }
+        
+        return {
+            h: Math.round(h * 360),
+            s: Math.round(s * 100),
+            l: Math.round(l * 100)
+        };
+    }
+
+    // Convert HSL to HEX
+    function hslToHex(h, s, l) {
+        s /= 100;
+        l /= 100;
+        let c = (1 - Math.abs(2 * l - 1)) * s;
+        let x = c * (1 - Math.abs((h / 60) % 2 - 1));
+        let m = l - c / 2;
+        let r = 0, g = 0, b = 0;
+        
+        if (0 <= h && h < 60) {
+            r = c; g = x; b = 0;
+        } else if (60 <= h && h < 120) {
+            r = x; g = c; b = 0;
+        } else if (120 <= h && h < 180) {
+            r = 0; g = c; b = x;
+        } else if (180 <= h && h < 240) {
+            r = 0; g = x; b = c;
+        } else if (240 <= h && h < 300) {
+            r = x; g = 0; b = c;
+        } else if (300 <= h && h < 360) {
+            r = c; g = 0; b = x;
+        }
+        
+        let rHex = Math.round((r + m) * 255).toString(16).padStart(2, '0');
+        let gHex = Math.round((g + m) * 255).toString(16).padStart(2, '0');
+        let bHex = Math.round((b + m) * 255).toString(16).padStart(2, '0');
+        
+        return `#${rHex}${gHex}${bHex}`.toUpperCase();
+    }
+
+    // --- Toast Notification ---
+    function showToast(message, color) {
+        const container = document.getElementById("toastContainer");
+        
+        const toast = document.createElement("div");
+        toast.className = "toast";
+        
+        const badge = document.createElement("div");
+        badge.className = "toast-color-badge";
+        badge.style.backgroundColor = color;
+        
+        const msgSpan = document.createElement("span");
+        msgSpan.className = "toast-message";
+        msgSpan.innerHTML = message;
+        
+        const progress = document.createElement("div");
+        progress.className = "toast-progress";
+        progress.style.setProperty('--accent', color);
+        
+        toast.appendChild(badge);
+        toast.appendChild(msgSpan);
+        toast.appendChild(progress);
+        
+        container.appendChild(toast);
+        
+        // Auto remove toast
+        setTimeout(() => {
+            toast.classList.add("removing");
+            toast.addEventListener("animationend", () => {
+                toast.remove();
+            });
+        }, 3000);
+    }
+
+    // Copy to clipboard helper
+    function copyToClipboard(text, color, label = "Teks") {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast(`${label} <b>${text}</b> berhasil disalin!`, color);
+        }).catch(err => {
+            console.error("Gagal menyalin text: ", err);
+        });
+    }
+
+    // --- Dynamic Card Reconstruction (Pantone style) ---
+    function rebuildCard(card) {
+        const pTags = card.querySelectorAll("p");
+        if (pTags.length === 0) return;
+
+        // Extract color hex
+        const hexSpan = card.querySelector(".warna");
+        if (!hexSpan) return;
+        const hex = hexSpan.textContent.trim().toUpperCase();
+        const rgb = hexToRgb(hex);
+
+        // Extract name and year
+        let rawName = pTags[0].textContent.trim();
+        let name = rawName;
+        let tag = "Season";
+
+        // If card is inside warnaTahun (all-time color panel), parse Year - Color Name
+        const parentDiv = card.parentElement;
+        const isWarnaTahun = parentDiv.id === "warnaTahun";
+
+        if (isWarnaTahun) {
+            // e.g. "2020 - Classic Blue" or "2017 Greenery"
+            const yearMatch = rawName.match(/^(\d{4})\s*-\s*(.+)$/) || rawName.match(/^(\d{4})\s+(.+)$/);
+            if (yearMatch) {
+                tag = yearMatch[1];
+                name = yearMatch[2];
+            } else {
+                tag = "Warna";
+            }
+        } else {
+            // Find preceding heading (h2 or h3) to build contextual tag
+            let sibling = card.previousElementSibling;
+            let sectionTitle = "";
+            while (sibling) {
+                if (sibling.tagName === 'H3' || sibling.tagName === 'H2') {
+                    sectionTitle = sibling.textContent;
+                    break;
+                }
+                sibling = sibling.previousElementSibling;
+            }
+            
+            if (sectionTitle) {
+                if (sectionTitle.toLowerCase().includes("hottest spring")) {
+                    tag = "Hot Spring";
+                } else if (sectionTitle.toLowerCase().includes("classic spring")) {
+                    tag = "Classic";
+                } else if (sectionTitle.toLowerCase().includes("autumn/winter")) {
+                    tag = "Fall/Winter";
+                } else {
+                    tag = parentDiv.id.replace("Thn", "20").replace("thn", "20");
+                }
+            } else {
+                tag = parentDiv.id.replace("Thn", "20").replace("thn", "20");
+            }
+        }
+
+        // Store structured attributes for rapid search/filtering
+        card.setAttribute("data-name", name.toLowerCase());
+        card.setAttribute("data-hex", hex.toLowerCase());
+        card.setAttribute("data-tag", tag.toLowerCase());
+        card.setAttribute("data-year", tag);
+
+        // Apply YIQ contrast color to text floating tags
+        const contrastTextColor = getContrastColor(hex);
+
+        // Reconstruct inner DOM
+        card.innerHTML = `
+            <div class="card-swatch" style="background-color: ${hex};">
+                <div class="card-tag" style="color: ${contrastTextColor}; border-color: ${contrastTextColor}33; background: ${contrastTextColor === '#ffffff' ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.4)'};">${tag}</div>
+                <button class="card-copy-btn" title="Salin HEX"><i data-lucide="copy"></i></button>
+            </div>
+            <div class="card-details">
+                <div class="card-name" title="${name}">${name}</div>
+                <div class="card-codes">
+                    <div class="card-code-row" data-val="${hex}" data-label="HEX">
+                        <span>HEX</span>
+                        <span>${hex} <i data-lucide="check" class="copied-icon hidden"></i></span>
+                    </div>
+                    <div class="card-code-row" data-val="${rgb}" data-label="RGB">
+                        <span>RGB</span>
+                        <span>${rgb} <i data-lucide="check" class="copied-icon hidden"></i></span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Click on "Copy" floating button on swatch
+        const swatchCopyBtn = card.querySelector(".card-copy-btn");
+        swatchCopyBtn.addEventListener("click", (e) => {
+            e.stopPropagation(); // Prevent opening modal
+            copyToClipboard(hex, hex, "HEX");
+        });
+
+        // Click on code rows (HEX/RGB) inside info panel
+        const codeRows = card.querySelectorAll(".card-code-row");
+        codeRows.forEach(row => {
+            row.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const value = row.getAttribute("data-val");
+                const label = row.getAttribute("data-label");
+                copyToClipboard(value, hex, label);
+            });
+        });
+
+        // Click on the card itself to open Harmonies Modal
+        card.addEventListener("click", () => {
+            openColorModal(name, hex, rgb, tag);
+        });
+    }
+
+    // Rebuild all cards on page load
+    rawCards.forEach(card => rebuildCard(card));
+
+    // --- Search & Real-time Filter ---
+    function filterColors() {
+        const query = searchInput.value.toLowerCase().trim();
+        const activePanel = document.querySelector("main > *:not(.hidden)");
+        if (!activePanel) return;
+
+        const cards = activePanel.querySelectorAll(".container2");
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            const name = card.getAttribute("data-name") || "";
+            const hex = card.getAttribute("data-hex") || "";
+            const year = card.getAttribute("data-year") || "";
+            
+            const matches = name.includes(query) || hex.includes(query) || year.toLowerCase().includes(query);
+
+            if (matches) {
+                card.classList.remove("hidden");
+                visibleCount++;
+            } else {
+                card.classList.add("hidden");
+            }
+        });
+
+        const totalCount = cards.length;
+        if (query === "") {
+            colorCountEl.textContent = `Menampilkan ${totalCount} warna`;
+            clearSearchBtn.classList.add("hidden");
+        } else {
+            colorCountEl.textContent = `Ditemukan ${visibleCount} dari ${totalCount} warna`;
+            clearSearchBtn.classList.remove("hidden");
+        }
+    }
+
+    searchInput.addEventListener("input", filterColors);
+    
+    clearSearchBtn.addEventListener("click", () => {
+        searchInput.value = "";
+        filterColors();
+        searchInput.focus();
+    });
+
+    // --- Navigation Tabs & Mobile Drawer ---
+    for (let a = 0; a < navItems.length; a++) {
+        // Init state: hide all except first panel
+        panels[a].classList.add("hidden");
+        panels[0].classList.remove("hidden");
+        navItems[0].classList.add("dipilih");
+
+        navItems[a].addEventListener("click", () => {
+            // Close mobile navigation drawer if open
+            navBar.classList.remove("tampil");
+            menuIcon.setAttribute("data-lucide", "menu");
+
+            // Change active nav item
+            for (let b = 0; b < panels.length; b++) {
+                panels[b].classList.add("hidden");
+                navItems[b].classList.remove("dipilih");
+            }
+
+            panels[a].classList.remove("hidden");
+            navItems[a].classList.add("dipilih");
+
+            // Reset search input and refresh filters
+            searchInput.value = "";
+            filterColors();
+            
+            // Re-render icons in navbar
+            lucide.createIcons();
+
+            // Smooth scroll to top of main content
+            document.querySelector("main").scrollTop = 0;
+        });
+    }
+
+    // Toggle menu button in mobile view
+    menuBtn.addEventListener("click", () => {
+        const isTampil = navBar.classList.toggle("tampil");
+        menuIcon.setAttribute("data-lucide", isTampil ? "x" : "menu");
+        lucide.createIcons();
+    });
+
+    // --- Color Harmonies Modal Generation ---
+    function openColorModal(name, hex, rgb, tag) {
+        modalColorYear.textContent = tag;
+        modalColorName.textContent = name;
+        modalHexText.textContent = hex;
+        modalRgbText.textContent = rgb;
+
+        // Big preview swatch background
+        modalColorPreview.style.backgroundColor = hex;
+
+        // Contrast text adjustments for preview swatch contents
+        const contrastTextColor = getContrastColor(hex);
+        modalHexText.style.color = contrastTextColor;
+        modalRgbText.style.color = contrastTextColor;
+        modalRgbText.style.opacity = contrastTextColor === '#ffffff' ? '0.75' : '0.6';
+
+        // Copy button style inside modal preview
+        modalCopyBtn.style.backgroundColor = contrastTextColor;
+        modalCopyBtn.style.color = contrastTextColor === '#ffffff' ? '#09090b' : '#ffffff';
+        modalCopyBtn.onclick = () => copyToClipboard(hex, hex, "HEX");
+
+        // HSL base values for harmony logic
+        const hsl = hexToHsl(hex);
+
+        // Clear existing harmony grids
+        harmonyComplementary.innerHTML = "";
+        harmonyAnalogous.innerHTML = "";
+        harmonyTriadic.innerHTML = "";
+        harmonyMonochromatic.innerHTML = "";
+
+        // Define harmony generator configurations
+        const harmonyConfigs = [
+            {
+                // Complementary: Original and Complements
+                grid: harmonyComplementary,
+                colors: [
+                    hslToHex(hsl.h, hsl.s, Math.min(hsl.l + 15, 95)),
+                    hex,
+                    hslToHex(hsl.h, hsl.s, Math.max(hsl.l - 15, 5)),
+                    hslToHex((hsl.h + 180) % 360, hsl.s, hsl.l),
+                    hslToHex((hsl.h + 180) % 360, hsl.s, Math.min(hsl.l + 15, 95))
+                ]
+            },
+            {
+                // Analogous: Hues spaced by 15 deg
+                grid: harmonyAnalogous,
+                colors: [
+                    hslToHex((hsl.h + 330) % 360, hsl.s, hsl.l),
+                    hslToHex((hsl.h + 345) % 360, hsl.s, hsl.l),
+                    hex,
+                    hslToHex((hsl.h + 15) % 360, hsl.s, hsl.l),
+                    hslToHex((hsl.h + 30) % 360, hsl.s, hsl.l)
+                ]
+            },
+            {
+                // Triadic: Hues spaced by 120 deg
+                grid: harmonyTriadic,
+                colors: [
+                    hslToHex((hsl.h + 240) % 360, hsl.s, Math.min(hsl.l + 15, 95)),
+                    hslToHex((hsl.h + 240) % 360, hsl.s, hsl.l),
+                    hex,
+                    hslToHex((hsl.h + 120) % 360, hsl.s, hsl.l),
+                    hslToHex((hsl.h + 120) % 360, hsl.s, Math.min(hsl.l + 15, 95))
+                ]
+            },
+            {
+                // Monochromatic: Vary lightness & saturation
+                grid: harmonyMonochromatic,
+                colors: [
+                    hslToHex(hsl.h, Math.max(hsl.s - 20, 10), Math.min(hsl.l + 30, 95)),
+                    hslToHex(hsl.h, Math.max(hsl.s - 10, 15), Math.min(hsl.l + 15, 90)),
+                    hex,
+                    hslToHex(hsl.h, Math.min(hsl.s + 10, 95), Math.max(hsl.l - 15, 15)),
+                    hslToHex(hsl.h, Math.min(hsl.s + 20, 100), Math.max(hsl.l - 30, 8))
+                ]
+            }
+        ];
+
+        // Construct swatches for each harmony group
+        harmonyConfigs.forEach(config => {
+            config.colors.forEach(colHex => {
+                const swatch = document.createElement("div");
+                swatch.className = "harmony-swatch";
+                swatch.style.backgroundColor = colHex;
+
+                const textCol = getContrastColor(colHex);
+
+                swatch.innerHTML = `
+                    <div class="harmony-swatch-hex" style="color: ${textCol}; background: ${textCol === '#ffffff' ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.45)'};">${colHex}</div>
+                `;
+
+                swatch.addEventListener("click", () => {
+                    copyToClipboard(colHex, colHex, "Harmoni HEX");
+                });
+
+                config.grid.appendChild(swatch);
+            });
+        });
+
+        // Open modal
+        colorModal.classList.remove("hidden");
+        lucide.createIcons(); // Initialize newly created close icon inside modal
+    }
+
+    function closeColorModal() {
+        colorModal.classList.add("hidden");
+    }
+
+    modalCloseBtn.addEventListener("click", closeColorModal);
+    
+    // Close modal when clicking on backdrop shadow
+    colorModal.addEventListener("click", (e) => {
+        if (e.target === colorModal) closeColorModal();
+    });
+
+    // Escape key closes modal
+    window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !colorModal.classList.contains("hidden")) {
+            closeColorModal();
+        }
+    });
+
+    // --- Final Initializations ---
+    lucide.createIcons(); // Render all static icons
+    filterColors();       // Initial display color count text setup
 });
